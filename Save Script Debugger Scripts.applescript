@@ -30,15 +30,17 @@ tell application "Script Debugger"
 		set theName to name
 	end tell -- document
 end tell -- app
-set theName to removeExtension from theName
+set {theName, theExtension} to removeExtension from theName
 set POSIXFile to POSIX path of theFile
 
 -- not yet sure how I'll check to see if it's in a git repo
 -- but for now I'll just export anything that is in a Script Libraries folder that does not have a parent directory called Library
+-- using direct export will make UI pop up in Script Debugger that the user will need to confirm
+-- an alternative is to use save instead of export but that means that the currently open document will become the compiled script version
 if POSIXFile contains "/Script Libraries/" and POSIXFile does not contain "/Library/" then
 	tell application "Finder" to set theDestination to folder "Script Libraries" of (path to library folder from user domain)
 	set theDestination to (theDestination as text) & theName & ".scpt"
-	tell application "Script Debugger" to save theDocument as compiled script in file theDestination without run only
+	tell application "Script Debugger" to save theDocument as compiled script in file theDestination with run only
 else if theName is in scriptMenuScripts then
 	set theDestination to (scriptsFolder as text) & theName
 	set theDestination to (theDestination as text) & ".scpt"
@@ -48,6 +50,8 @@ end if
 say saveMessage
 
 on removeExtension from theFileName
+	-- could probably do this with fewer lines of code using AppleScript text item delimiters
+	-- or using Finder (I believe Finder items have name and extension properties)
 	set reversedName to reverse of characters of theFileName
 	set reversedName to reversedName as text
 	set theOffset to the offset of "." in reversedName
@@ -56,5 +60,8 @@ on removeExtension from theFileName
 	set nameMinusExtension to reverse of characters of truncatedName
 	set nameMinusExtension to nameMinusExtension as text
 	log nameMinusExtension
-	return nameMinusExtension
+	set theExtension to characters 1 through (theOffset - 1) of reversedName
+	set theExtension to theExtension as text
+	set theExtension to (reverse of characters of theExtension) as text
+	return {nameMinusExtension, theExtension}
 end removeExtension
