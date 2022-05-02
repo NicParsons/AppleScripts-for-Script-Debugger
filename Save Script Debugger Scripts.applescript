@@ -1,3 +1,4 @@
+-- <script menu>true</script menu>
 -- build script
 --	Created by: Nicholas Parsons
 --	Created on: 27/4/2022
@@ -7,9 +8,6 @@
 
 use AppleScript version "2.4" -- Yosemite (10.10) or later
 use scripting additions
-
--- names (minus extension) for scripts that should be saved to Script Debugger's scripts menu
-property scriptMenuScripts : {"Save Script Debugger Scripts", "Show todos in Script Debugger"}
 
 on run
 	set saveMessage to ""
@@ -46,7 +44,7 @@ on run
 		set theDestination to (theDestination as text) & theName & ".scpt"
 		tell application "Script Debugger" to save theDocument as compiled script in file theDestination with run only
 		set saveMessage to saveMessage & ", exported as script library"
-	else if theName is in scriptMenuScripts then
+	else if isScriptsMenuScript(theDocument) then
 		set theDestination to (scriptsFolder as text) & theName
 		set theDestination to (theDestination as text) & ".scpt"
 		tell application "Script Debugger" to save theDocument as compiled script in file theDestination with run only
@@ -107,6 +105,29 @@ on isInScriptLibrariesFolder(theDocument)
 		error errorMessage & " (thrown in the isInScriptLibrariesFolder handler)" number errorNumber
 	end try
 end isInScriptLibrariesFolder
+
+on isScriptsMenuScript(theDocument)
+	try
+		tell application "Script Debugger" to set theSourceCode to source text of theDocument
+		set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {"<script menu>", "</script menu>"}}
+		try
+			set theTag to text item 2 of theSourceCode
+			set AppleScript's text item delimiters to saveTID
+		on error
+			set AppleScript's text item delimiters to saveTID
+			set theTag to "false"
+		end try
+		try
+			set isMenuItem to theTag as boolean
+		on error -- poorly formatted or unintentional tags, as in this script
+			log "Error parsing scripts menu tag"
+			set isMenuItem to false
+		end try
+	on error errorMessage number errorNumber
+		error errorMessage & " (thrown in the isScriptsMenuScript handler)" number errorNumber
+	end try
+	return isMenuItem
+end isScriptsMenuScript
 
 on notifyUser about thisMessage
 	say thisMessage
