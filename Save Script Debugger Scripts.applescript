@@ -130,5 +130,25 @@ on isScriptsMenuScript(theDocument)
 end isScriptsMenuScript
 
 on notifyUser about thisMessage
+	(*
+if we do
+say thisMessage without waiting until completion
+we only hear the notification if the script is run from within SD, otherwise it is siolent
+which is odd, as it works fine when run from within an applet
+*)
 	say thisMessage
 end notifyUser
+
+(* #todo:
+
+* export scripts tagged as applets
+* possibly customise export location
+* increment version number
+* specify version as beta or not
+* get release notes
+* create Mars Edit post
+* create email
+* move exported .dmg to specified folder
+* create appcast
+
+*)
