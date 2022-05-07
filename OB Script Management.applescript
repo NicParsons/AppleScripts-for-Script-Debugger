@@ -1,4 +1,5 @@
--- <export location>Script Libraries Folder</export location>-- <export format>Compiled Script</export format>
+-- <export location>Script Libraries Folder</export location>
+-- <export format>Compiled Script</export format>
 -- OB Script Management
 --	Created by: Nicholas Parsons
 --	Created on: 7/5/2022
@@ -75,6 +76,7 @@ else if theFormatString is then
 end exportFormat
 
 on isScriptLibrary(theDocument)
+	-- depricated (use exportLocationTag instead, the value of which should be Script Library Folder) 
 	try
 		set isLibrary to contentsOfTag from theDocument given tag:scriptLibraryTag
 		if class of isLibrary is not boolean then
@@ -88,6 +90,7 @@ on isScriptLibrary(theDocument)
 end isScriptLibrary
 
 on isScriptMenuScript(theDocument)
+	-- depricated (use exportLocationTag instead, the value of which should be Scripts Menu Folder) 
 	try
 		set isMenuItem to contentsOfTag from theDocument given tag:scriptMenuTag
 		if class of isMenuItem is not boolean then
@@ -105,6 +108,7 @@ on contentsOfTag from thisScript given tag:theTag as text
 		tell application "Script Debugger" to set theSourceCode to source text of thisScript
 		set openingTag to openTag for theTag
 		set closingTag to closeTag for theTag
+		-- #todo: this method will also return the contents of improperly formatted tags e.g. 2 opening tags or 2 closing tags (should change it so only text between opening and closing tags is returned)
 		set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {openingTag, closingTag}}
 		try
 			set tagContents to text item 2 of theSourceCode
@@ -119,6 +123,25 @@ on contentsOfTag from thisScript given tag:theTag as text
 	end try
 	return tagContents
 end contentsOfTag
+
+on changeTagValue to thisValue for theTag given documentID:theDocument
+	try
+		tell application "Script Debugger" to set theSourceCode to source text of theDocument
+		set openingTag to openTag for theTag
+		set closingTag to closeTag for theTag
+		set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {openingTag, closingTag}}
+		try
+			set theSourceCode to (text item 1 of theSourceCode) & openingTag & thisValue & closingTag & (text items 3 through -1 of theSourceCode)
+			set AppleScript's text item delimiters to saveTID
+		on error errorMessage number errorNumber
+			set AppleScript's text item delimiters to saveTID
+			error errorMessage number errorNumber
+		end try
+		tell application "Script Debugger" to set source text of theDocument to theSourceCode
+	on error errorMessage number errorNumber
+		error errorMessage & " (thrown in the changeTagValue handler of OB Script Management)" number errorNumber
+	end try
+end changeTagValue
 
 on openTag for thisTag as text
 	return "<" & thisTag & ">"

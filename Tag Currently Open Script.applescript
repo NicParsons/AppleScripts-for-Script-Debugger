@@ -1,4 +1,5 @@
--- <export location>Scripts Menu Folder</export location>-- <export format>Compiled Script</export format>
+-- <export location>Scripts Menu Folder</export location>
+-- <export format>Compiled Script</export format>
 -- add tags to scripts to assist with automated exports from source control friendly format to compiled script format
 --	Created by: Nicholas Parsons
 --	Created on: 2/5/2022
@@ -12,22 +13,24 @@ use scriptManagementLib : script "OB Script Management"
 
 on run
 	try
-		(*
-		set theChoice to choose from list (theTags of scriptManagementLib) with prompt "Select a tag to add to the currently frontmost open script in Script Debugger." with title "Tag a Script" OK button name "Tag"
-		if theChoice is false then error number -128
-		set theChoice to theChoice as text
-		
-		set {chosenTag, itsContents} to tagAndContents for theChoice
-		
-		tell application "Script Debugger" to set theDocument to document 1
-		tell scriptManagementLib to set existingContents to contentsOfTag from theDocument given tag:chosenTag
-		if itsContents = existingContents then display alert "Tag the script again?" message "The script is already tagged as a " & theChoice & "." buttons {"Cancel", "Tag Anyway"} cancel button 1 as warning
-		*)
+		set notificationText to "Tag added."
 		set {theFormat, theLocation} to chooseTag()
 		tell application "Script Debugger" to set theDocument to document 1
-		tagTheScript(theDocument, (exportFormatTag of scriptManagementLib), theFormat)
-		tagTheScript(theDocument, (exportLocationTag of scriptManagementLib), theLocation)
-		tell scriptManagementLib to notifyUser about "Tag added."
+		tell scriptManagementLib to set existingContents to contentsOfTag from theDocument given tag:(exportFormatTag of scriptManagementLib)
+		if existingContents is missing value then
+			tagTheScript(theDocument, (exportFormatTag of scriptManagementLib), theFormat)
+		else if existingContents is not theFormat then
+			tell scriptManagementLib to changeTagValue to theFormat for (exportFormatTag of scriptManagementLib) given documentID:theDocument
+			set notificationText to "Tag updated."
+		end if
+		tell scriptManagementLib to set existingContents to contentsOfTag from theDocument given tag:(exportLocationTag of scriptManagementLib)
+		if existingContents is missing value then
+			tagTheScript(theDocument, (exportLocationTag of scriptManagementLib), theLocation)
+		else if existingContents is not theLocation then
+			tell scriptManagementLib to changeTagValue to theLocation for (exportLocationTag of scriptManagementLib) given documentID:theDocument
+			set notificationText to "Tag updated."
+		end if
+		tell scriptManagementLib to notifyUser about notificationText
 	on error errorMessage number errorNumber
 		if errorNumber is not -128 then display alert "Error number " & errorNumber message errorMessage
 	end try
@@ -81,10 +84,6 @@ end chooseTag
 
 (*
 
-#todo: rather than making boolean properties for script library and script menu, use an export location tag the value of which can effectively be an enum of common constants/locations
-#todo: set contents of exportLocationTag with common constants (e.g. same directory, script libraries folder, scripts menu folder, general/default scripts directory which can be configured in user defaults)
-#todo: similarly, no need for applet tag – can instead use export format tag the value of which can be another enum of script formats
-#todo: a way to change an enhanced applet tag to a standard applet tag and vice-verser
 #todo: an option to remove tags (though easy enough to do manually)
 
 *)
