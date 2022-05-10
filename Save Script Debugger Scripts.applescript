@@ -37,6 +37,10 @@ on run
 	
 	-- export the script to the specified location and in the specified format if it contains a recognisable tag
 	tell scriptManagementLib to set theLocation to exportLocation for theDocument
+	if theLocation is missing value then -- the script was not tagged with an export location
+		tell scriptManagementLib to notifyUser about saveMessage
+		return
+	end if
 	tell scriptManagementLib to set theFormat to exportFormat for theDocument
 	set {theName, theExtension} to removeExtension from theName
 	set theExtension to formatExtension for theFormat
