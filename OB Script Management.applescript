@@ -38,8 +38,8 @@ on exportLocation for thisScript
 			tell application "Script Debugger" to set scriptsFolder to scripts menu folder
 			set theDirectoryPath to (scriptsFolder as text)
 		else if theLocationString is "Same Directory" then
-			tell application "Script Debugger" to set theFile to file spec of theDocument
-			tell application "Finder" to set theFolder to container of theFile
+			tell application "Script Debugger" to set theFile to file spec of thisScript
+			tell application "Finder" to set theFolder to container of item (theFile as text)
 			set theDirectoryPath to theFolder as text
 		else if theLocationString is "Default Scripts Folder" then
 			-- #todo: use PrefsStorageLib to return value for key "defaultScriptsFolder" or allow user to choose foldre if missing value

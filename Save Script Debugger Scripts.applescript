@@ -12,47 +12,46 @@ use scripting additions
 use scriptManagementLib : script "OB Script Management"
 
 on run
-	set saveMessage to ""
-	tell application "Script Debugger"
-		set scriptsFolder to scripts menu folder
-		set theDocument to document 1
-		tell theDocument
-			if not compiled then compile
-			if modified then
-				save
-				set saveMessage to "Saved"
-			else
-				set saveMessage to "Already saved"
-			end if
-			set theName to name -- of theDocument
-			set scriptType to script type -- of theDocument
-		end tell -- document
-	end tell -- app
-	
-	-- currently we only support exporting text scripts but should eventually remove this limitation
-	if scriptType is not text script then
+	try
+		set saveMessage to ""
+		tell application "Script Debugger"
+			set theDocument to document 1
+			tell theDocument
+				if not compiled then
+					compile
+					set saveMessage to "Compiled, "
+				end if
+				if modified then
+					save
+					set saveMessage to saveMessage & "Saved"
+				else
+					set saveMessage to saveMessage & "Already saved"
+				end if
+				set theName to name -- of theDocument
+			end tell -- document
+		end tell -- app
+		
+		-- export the script to the specified location and in the specified format if it contains a recognisable tag
+		tell scriptManagementLib to set theLocation to exportLocation for theDocument
+		if theLocation is missing value then -- the script was not tagged with an export location
+			tell scriptManagementLib to notifyUser about saveMessage
+			return
+		end if
+		tell scriptManagementLib to set theFormat to exportFormat for theDocument
+		set {theName, theExtension} to removeExtension from theName
+		set theExtension to formatExtension for theFormat
+		set theLocation to theLocation & theName & theExtension
+		
+		tell scriptManagementLib to set theExportedLocation to contentsOfTag from theDocument given tag:(exportLocationTag of scriptManagementLib)
+		set saveMessage to saveMessage & ", exported to " & theExportedLocation
+		
+		-- using direct export will make UI pop up in Script Debugger that the user will need to confirm
+		-- an alternative is to use save instead of export but that means that the currently open document will become the compiled script version, unless we save as run only in which case the UI notification appears as well
+		tell application "Script Debugger" to save theDocument as theFormat in file theLocation with run only
 		tell scriptManagementLib to notifyUser about saveMessage
-		return
-	end if
-	
-	-- export the script to the specified location and in the specified format if it contains a recognisable tag
-	tell scriptManagementLib to set theLocation to exportLocation for theDocument
-	if theLocation is missing value then -- the script was not tagged with an export location
-		tell scriptManagementLib to notifyUser about saveMessage
-		return
-	end if
-	tell scriptManagementLib to set theFormat to exportFormat for theDocument
-	set {theName, theExtension} to removeExtension from theName
-	set theExtension to formatExtension for theFormat
-	set theLocation to theLocation & theName & theExtension
-	
-	tell scriptManagementLib to set theExportedLocation to contentsOfTag from theDocument given tag:(exportLocationTag of scriptManagementLib)
-	set saveMessage to saveMessage & ", exported to " & theExportedLocation
-	
-	-- using direct export will make UI pop up in Script Debugger that the user will need to confirm
-	-- an alternative is to use save instead of export but that means that the currently open document will become the compiled script version, unless we save as run only in which case the UI notification appears as well
-	tell application "Script Debugger" to save theDocument as theFormat in file theLocation with run only
-	tell scriptManagementLib to notifyUser about saveMessage
+	on error errorMessage number errorNumber
+		display alert "Error saving script" message errorMessage & return & return & "Error number " & errorNumber
+	end try
 end run
 
 on removeExtension from theFileName
