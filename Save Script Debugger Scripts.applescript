@@ -28,6 +28,7 @@ on run
 					set saveMessage to saveMessage & "Already saved"
 				end if
 				set theName to name -- of theDocument
+				set theVersion to marketing version
 			end tell -- document
 		end tell -- app
 		
@@ -47,10 +48,19 @@ on run
 		
 		-- using direct export will make UI pop up in Script Debugger that the user will need to confirm
 		-- an alternative is to use save instead of export but that means that the currently open document will become the compiled script version, unless we save as run only in which case the UI notification appears as well
-		tell application "Script Debugger" to save theDocument as theFormat in file theLocation with run only
+		-- for applets, or anything being exported in the same directory with the same extension as the script being exported, we need to use direct export to stop the script being over written
+		if theFormat is script application or theFormat is enhanced application then
+			set theVersion to confirmVersionNumber for theVersion
+			tell application "Script Debugger" to set the marketing version of theDocument to theVersion
+			tell application "Script Debugger" to direct export theDocument as theFormat
+			set theButton to button returned of (display alert "Increment version number?" message "The current version number is " & theVersion buttons {"Leave as is", "Increment"} default button 2)
+			if theButton is "Increment" then tell application "Script Debugger" to set marketing version of theDocument to incrementVersionNumber of me for theVersion
+		else
+			tell application "Script Debugger" to save theDocument as theFormat in file theLocation with run only
+		end if
 		tell scriptManagementLib to notifyUser about saveMessage
 	on error errorMessage number errorNumber
-		display alert "Error saving script" message errorMessage & return & return & "Error number " & errorNumber
+		if errorNumber is not -128 then display alert "Error saving script" message errorMessage & return & return & "Error number " & errorNumber
 	end try
 end run
 
@@ -97,6 +107,26 @@ on isInScriptLibrariesFolder(theDocument)
 		error errorMessage & " (thrown in the isInScriptLibrariesFolder handler)" number errorNumber
 	end try
 end isInScriptLibrariesFolder
+
+on confirmVersionNumber for thisVersion
+	display dialog "Confirm the version number of this release." default answer thisVersion with title "Release Version" buttons {"Cancel", "Confirm"} cancel button 1 default button 2 with icon note
+	return text returned of result
+end confirmVersionNumber
+
+on incrementVersionNumber for thisVersion
+	try
+		set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {"."}}
+		set newVersion to (text items 1 through -2 of thisVersion) as text
+		set minorVersion to the last text item of thisVersion
+		set AppleScript's text item delimiters to saveTID
+		set minorVersion to minorVersion as number
+		set minorVersion to minorVersion + 1
+		set newVersion to newVersion & "." & (minorVersion as text)
+		return newVersion
+	on error errorMessage number errorNumber
+		return thisVersion
+	end try
+end incrementVersionNumber
 
 (*
 
