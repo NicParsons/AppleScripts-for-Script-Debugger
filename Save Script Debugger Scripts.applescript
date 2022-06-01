@@ -114,26 +114,33 @@ on confirmVersionNumber for thisVersion
 end confirmVersionNumber
 
 on incrementVersionNumber for thisVersion
+	set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {"."}}
 	try
-		set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {"."}}
 		set newVersion to (text items 1 through -2 of thisVersion) as text
 		set minorVersion to the last text item of thisVersion
 		set AppleScript's text item delimiters to saveTID
-		set minorVersion to minorVersion as number
-		set minorVersion to minorVersion + 1
-		set newVersion to newVersion & "." & (minorVersion as text)
-		return newVersion
+		if (count of words of minorVersion) > 1 then
+			set fixedPart to (words 1 through -2 of minorVersion) as text
+			set minorVersion to the last word of minorVersion
+			set minorVersion to minorVersion as number
+			set minorVersion to minorVersion + 1
+			set minorVersion to fixedPart & (minorVersion as text)
+		else
+			set minorVersion to minorVersion as number
+			set minorVersion to minorVersion + 1
+			set minorVersion to minorVersion as text
+		end if
+		set newVersion to newVersion & "." & minorVersion
 	on error errorMessage number errorNumber
-		return thisVersion
+		set AppleScript's text item delimiters to saveTID
+		set newVersion to thisVersion
 	end try
+	return newVersion
 end incrementVersionNumber
 
 (*
 
-#todo: export scripts tagged as applets
-#todo: possibly customise export location
-#todo: increment version number
-#todo: specify version as beta or not
+#todo: possibly customise export location (at least for general scripts)
 #todo: get release notes
 #todo: create Mars Edit post
 #todo: create email
