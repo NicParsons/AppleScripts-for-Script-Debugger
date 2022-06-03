@@ -120,11 +120,13 @@ on incrementVersionNumber for thisVersion
 		set minorVersion to the last text item of thisVersion
 		set AppleScript's text item delimiters to saveTID
 		if (count of words of minorVersion) > 1 then
-			set fixedPart to (words 1 through -2 of minorVersion) as text
+			set fixedPart to words 1 through -2 of minorVersion
 			set minorVersion to the last word of minorVersion
 			set minorVersion to minorVersion as number
 			set minorVersion to minorVersion + 1
-			set minorVersion to fixedPart & (minorVersion as text)
+			set {saveTID, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {space}}
+			set minorVersion to ((fixedPart as text) & (minorVersion as text) as text)
+			set AppleScript's text item delimiters to saveTID
 		else
 			set minorVersion to minorVersion as number
 			set minorVersion to minorVersion + 1
