@@ -1,5 +1,6 @@
--- <script menu>true</script menu>
---
+-- <export location>Scripts Menu Folder</export location>
+-- <export format>Compiled Script</export format>
+-- a script to display all #todo items in a script
 --	Created by: Nicholas Parsons
 --	Created on: 27/4/2022
 --
